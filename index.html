@@ -1,23 +1,705 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
-  <script>
-  window.onload = function() {
-    const user = JSON.parse(localStorage.getItem('loggedInUser'));
-    if(!user) {
-      alert('Please login first!');
-      window.location.href = 'login.html';
-    } else {
-      document.getElementById('username').textContent = user.username;
+  <title>Təhlükəsiz Fayl Şifrələmə Sistemi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+
+.file-upload-header button:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+    .sidebar-item:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+      border-left: 4px solid #3b82f6;
     }
-  }
-  </script>
+
+    .sidebar-item.active {
+      background-color: rgba(59, 130, 246, 0.2);
+      border-left: 4px solid #3b82f6;
+    }
+
+    .file-upload:hover {
+      border-color: #3b82f6;
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    .glow-button:hover {
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    }
+
+    .crypto-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-greeting {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .welcome-container {
+      perspective: 1000px;
+    }
+
+    .welcome-text {
+      transform-style: preserve-3d;
+      animation: flipIn 1.5s ease-out;
+    }
+
+    @keyframes flipIn {
+      0% {
+        transform: rotateX(90deg);
+        opacity: 0;
+      }
+
+      100% {
+        transform: rotateX(0);
+        opacity: 1;
+      }
+    }
+
+    .file-upload-header {
+  display: flex; /* display: none əvəzinə */
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+  </style>
 </head>
-<body>
-  <h1>Welcome, <span id="username"></span>!</h1>
-  <button onclick="localStorage.removeItem('loggedInUser'); window.location.href='login.html'">Logout</button>
+
+<body class="bg-gray-50 min-h-screen">
+  <!-- Navbar -->
+  <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fas fa-lock text-2xl"></i>
+        <h1 class="text-xl font-bold" data-i18n="system_name">CryptoSec</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="welcome-container">
+          <div class="welcome-text">
+            <span class="text-sm" data-i18n="welcome">Xoş gəlmisiniz,</span>
+            <span id="username-display" class="user-greeting font-bold ml-1 text-lg"></span>
+            <i class="fas fa-smile-beam ml-2 text-yellow-300"></i>
+          </div>
+        </div>
+        <select id="language-switcher" class="bg-white text-blue-600 px-2 py-1 rounded-full"
+          onchange="changeLanguage(this.value)">
+          <option value="az">AZ</option>
+          <option value="en">EN</option>
+          <option value="ru">RU</option>
+        </select>
+        <button onclick="logout()"
+          class="bg-white text-blue-600 px-4 py-1 rounded-full hover:bg-blue-50 transition transform hover:scale-105">
+          <span data-i18n="logout">Çıxış</span> <i class="fas fa-sign-out-alt ml-1"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-md h-screen sticky top-0">
+      <div class="p-4">
+        <h2 class="text-lg font-semibold text-gray-700" data-i18n="menu">Menu</h2>
+      </div>
+      <ul class="space-y-1 px-2">
+        <li>
+          <a href="#" onclick="showSection('main-page')"
+            class="sidebar-item active flex items-center p-3 text-gray-700 rounded-lg transition">
+            <i class="fas fa-home mr-3"></i>
+            <span data-i18n="main_page">Ana Səhifə</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('encryption-page')"
+            class="sidebar-item flex items-center p-3 text-gray-700 rounded-lg transition">
+            <i class="fas fa-lock mr-3"></i>
+            <span data-i18n="encryption">Şifrələmə</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('decryption-page')"
+            class="sidebar-item flex items-center p-3 text-gray-700 rounded-lg transition">
+            <i class="fas fa-unlock mr-3"></i>
+            <span data-i18n="decryption">Şifrəni Açma</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('history-page')"
+            class="sidebar-item flex items-center p-3 text-gray-700 rounded-lg transition">
+            <i class="fas fa-history mr-3"></i>
+            <span data-i18n="history">Tarixçə</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+      <!-- Main Page -->
+      <div id="main-page" class="section-content">
+        <h2 class="text-2xl font-bold text-blue-600 mb-6" data-i18n="main_title">Təhlükəsiz Fayl Şifrələmə Sistemi</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="crypto-card bg-white p-6 rounded-xl shadow-md transition">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-info-circle text-blue-500 text-2xl mr-3"></i>
+              <h3 class="text-lg font-semibold" data-i18n="about_project">Layihə Haqqında</h3>
+            </div>
+            <p class="text-gray-600" data-i18n="about_text">
+              Bu sistem AES və RSA kimi qabaqcıl kriptoqrafik alqoritmlər vasitəsilə fayllarınızı təhlükəsiz şəkildə
+              şifrələyir.
+            </p>
+          </div>
+
+          <div class="crypto-card bg-white p-6 rounded-xl shadow-md transition">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-key text-blue-500 text-2xl mr-3"></i>
+              <h3 class="text-lg font-semibold" data-i18n="algorithms">Şifrələmə Alqoritmləri</h3>
+            </div>
+            <p class="text-gray-600" data-i18n="algorithms_text">
+              AES (128, 192, 256 bit), RSA (2048 bit) və digər müasir şifrələmə metodları dəstəklənir.
+            </p>
+          </div>
+
+          <div class="crypto-card bg-white p-6 rounded-xl shadow-md transition">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-shield-alt text-blue-500 text-2xl mr-3"></i>
+              <h3 class="text-lg font-semibold" data-i18n="importance">Şifrələmənin Əhəmiyyəti</h3>
+            </div>
+            <p class="text-gray-600" data-i18n="importance_text">
+              Məlumatlarınızı üçüncü şəxslərdən qorumaq üçün şifrələmə vacibdir.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h3 class="text-xl font-semibold mb-4 text-blue-600" data-i18n="instructions">Təlimat</h3>
+          <ol class="list-decimal pl-5 space-y-2 text-gray-600">
+            <li data-i18n="step1">Şifrələmə bölməsindən fayl seçin və alqoritm seçin</li>
+            <li data-i18n="step2">"Şifrələ" düyməsini basın</li>
+            <li data-i18n="step3">Yaranan şifrələnmiş faylı yükləyin</li>
+            <li data-i18n="step4">Şifrəni açmaq üçün eyni alqoritmdən istifadə edin</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Encryption Page -->
+      <div id="encryption-page" class="section-content hidden">
+        <h2 class="text-2xl font-bold text-blue-600 mb-6" data-i18n="encryption_title">Fayl Şifrələmə</h2>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <div id="encrypt-drop-zone"
+                class="file-upload border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition mb-4">
+                <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-3"></i>
+                <p class="text-gray-600" data-i18n="upload_file">Faylı bura sürükləyin və ya klik edin</p>
+                <input type="file" id="encrypt-file-input" class="hidden">
+              </div>
+              <!-- Fayl yükləmə zonasına bu elementi əlavə edin -->
+              <div class="file-upload-header flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-500" data-i18n="selected_file">Seçilmiş fayl:</span>
+                <button onclick="clearFileInput('encrypt')" class="text-red-500 hover:text-red-700">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 mb-2" data-i18n="select_algorithm">Alqoritm seçin:</label>
+                <select id="encrypt-algorithm"
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                  <option value="aes-256">AES-256</option>
+                  <option value="rsa-2048">RSA-2048</option>
+                  <option value="blowfish">Blowfish</option>
+                </select>
+              </div>
+
+              <button id="encrypt-btn"
+                class="glow-button bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition w-full">
+                <i class="fas fa-lock mr-2"></i> <span data-i18n="encrypt">Şifrələ</span>
+              </button>
+            </div>
+
+            <div>
+              <div class="mb-4">
+                <label class="block text-gray-700 mb-2" data-i18n="encrypted_result">Şifrələnmiş nəticə:</label>
+                <textarea id="encrypted-result" rows="8" class="w-full p-3 border border-gray-300 rounded-md bg-gray-50"
+                  readonly></textarea>
+              </div>
+
+              <button id="download-encrypted-btn"
+                class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition w-full" disabled>
+                <i class="fas fa-download mr-2"></i> <span data-i18n="download">Yüklə</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decryption Page -->
+      <div id="decryption-page" class="section-content hidden">
+        <h2 class="text-2xl font-bold text-blue-600 mb-6" data-i18n="decryption_title">Fayl Şifrəsini Açma</h2>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <div id="decrypt-drop-zone"
+                class="file-upload border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition mb-4">
+                <i class="fas fa-file-import text-4xl text-blue-500 mb-3"></i>
+                <p class="text-gray-600" data-i18n="upload_encrypted">Şifrələnmiş faylı bura yükləyin</p>
+                <input type="file" id="decrypt-file-input" class="hidden">
+              </div>
+              <!-- Fayl yükləmə zonasına bu elementi əlavə edin -->
+              <div class="file-upload-header flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-500" data-i18n="selected_file">Seçilmiş fayl:</span>
+                <button onclick="clearFileInput('decrypt')" class="text-red-500 hover:text-red-700">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-gray-700 mb-2" data-i18n="select_algorithm">Alqoritm seçin:</label>
+                <select id="decrypt-algorithm"
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                  <option value="unknown" data-i18n="unknown_algorithm">Alqoritm məlum deyil</option>
+                  <option value="aes-256">AES-256</option>
+                  <option value="rsa-2048">RSA-2048</option>
+                  <option value="blowfish">Blowfish</option>
+                </select>
+              </div>
+
+              <button id="decrypt-btn"
+                class="glow-button bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition w-full">
+                <i class="fas fa-unlock mr-2"></i> <span data-i18n="decrypt">Şifrəni Aç</span>
+              </button>
+            </div>
+
+            <div>
+              <div class="mb-4">
+                <label class="block text-gray-700 mb-2" data-i18n="decrypted_result">Şifrəsi açılmış nəticə:</label>
+                <textarea id="decrypted-result" rows="8" class="w-full p-3 border border-gray-300 rounded-md bg-gray-50"
+                  readonly></textarea>
+              </div>
+
+              <button id="download-decrypted-btn"
+                class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition w-full" disabled>
+                <i class="fas fa-download mr-2"></i> <span data-i18n="download">Yüklə</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Page -->
+      <div id="history-page" class="section-content hidden">
+        <h2 class="text-2xl font-bold text-blue-600 mb-6" data-i18n="history_title">Əməliyyat Tarixçəsi</h2>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    data-i18n="date">Tarix</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    data-i18n="operation">Əməliyyat</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    data-i18n="algorithm">Alqoritm</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    data-i18n="filename">Fayl adı</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body" class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td colspan="4" class="px-6 py-4 text-center text-gray-500" data-i18n="no_history">Hələ heç bir
+                    əməliyyat yoxdur</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const translations = {
+      az: {
+        system_title: "Təhlükəsiz Fayl Şifrələmə Sistemi",
+        system_name: "SecureCrypto",
+        welcome: "Xoş gəlmisiniz,",
+        logout: "Çıxış",
+        menu: "Menu",
+        main_page: "Ana Səhifə",
+        encryption: "Şifrələmə",
+        decryption: "Şifrəni Açma",
+        history: "Tarixçə",
+        main_title: "Təhlükəsiz Fayl Şifrələmə Sistemi",
+        about_project: "Layihə Haqqında",
+        about_text: "Bu sistem AES və RSA kimi qabaqcıl kriptoqrafik alqoritmlər vasitəsilə fayllarınızı təhlükəsiz şəkildə şifrələyir.",
+        algorithms: "Şifrələmə Alqoritmləri",
+        algorithms_text: "AES (128, 192, 256 bit), RSA (2048 bit) və digər müasir şifrələmə metodları dəstəklənir.",
+        importance: "Şifrələmənin Əhəmiyyəti",
+        importance_text: "Məlumatlarınızı üçüncü şəxslərdən qorumaq üçün şifrələmə vacibdir.",
+        instructions: "Təlimat",
+        step1: "Şifrələmə bölməsindən fayl seçin və alqoritm seçin",
+        step2: "\"Şifrələ\" düyməsini basın",
+        step3: "Yaranan şifrələnmiş faylı yükləyin",
+        step4: "Şifrəni açmaq üçün eyni alqoritmdən istifadə edin",
+        encryption_title: "Fayl Şifrələmə",
+        upload_file: "Faylı bura sürükləyin və ya klik edin",
+        select_algorithm: "Alqoritm seçin:",
+        encrypt: "Şifrələ",
+        encrypted_result: "Şifrələnmiş nəticə:",
+        download: "Yüklə",
+        decryption_title: "Fayl Şifrəsini Açma",
+        upload_encrypted: "Şifrələnmiş faylı bura yükləyin",
+        unknown_algorithm: "Alqoritm məlum deyil",
+        decrypt: "Şifrəni Aç",
+        decrypted_result: "Şifrəsi açılmış nəticə:",
+        history_title: "Əməliyyat Tarixçəsi",
+        date: "Tarix",
+        operation: "Əməliyyat",
+        algorithm: "Alqoritm",
+        filename: "Fayl adı",
+        no_history: "Hələ heç bir əməliyyat yoxdur",
+        alert_select_file: "Zəhmət olmasa şifrələmək üçün fayl seçin!",
+        alert_select_algorithm: "Alqoritm seçilməyib! Şifrəni açmaq üçün düzgün alqoritmi seçin.",
+        alert_select_encrypted_file: "Zəhmət olmasa şifrəsini açmaq üçün fayl seçin!",
+        alert_select_encrypted_file: "Zəhmət olmasa şifrəsini açmaq üçün fayl seçin!",
+        alert_select_algorithm: "Alqoritm seçilməyib! Şifrəni açmaq üçün düzgün alqoritmi seçin.",
+        decrypted_content: "Şifrəsi açılmış məzmun",
+        decryption_operation: "Şifrəni açma"
+      },
+      en: {
+        system_title: "Secure File Encryption System",
+        system_name: "SecureCrypto",
+        welcome: "Welcome,",
+        logout: "Logout",
+        menu: "Menu",
+        main_page: "Main Page",
+        encryption: "Encryption",
+        decryption: "Decryption",
+        history: "History",
+        main_title: "Secure File Encryption System",
+        about_project: "About Project",
+        about_text: "This system securely encrypts your files using advanced cryptographic algorithms like AES and RSA.",
+        algorithms: "Encryption Algorithms",
+        algorithms_text: "Supports AES (128, 192, 256 bit), RSA (2048 bit) and other modern encryption methods.",
+        importance: "Importance of Encryption",
+        importance_text: "Encryption is essential to protect your data from third parties.",
+        instructions: "Instructions",
+        step1: "Select file and algorithm in encryption section",
+        step2: "Click \"Encrypt\" button",
+        step3: "Download the encrypted file",
+        step4: "Use the same algorithm for decryption",
+        encryption_title: "File Encryption",
+        upload_file: "Drag and drop file or click here",
+        select_algorithm: "Select algorithm:",
+        encrypt: "Encrypt",
+        encrypted_result: "Encrypted result:",
+        download: "Download",
+        decryption_title: "File Decryption",
+        upload_encrypted: "Upload encrypted file here",
+        unknown_algorithm: "Algorithm unknown",
+        decrypt: "Decrypt",
+        decrypted_result: "Decrypted result:",
+        history_title: "Operation History",
+        date: "Date",
+        operation: "Operation",
+        algorithm: "Algorithm",
+        filename: "Filename",
+        no_history: "No operations yet",
+        alert_select_file: "Please select a file to encrypt!",
+        alert_select_algorithm: "Please select correct algorithm for decryption!",
+        alert_select_encrypted_file: "Please select a file to decrypt!",
+        alert_select_encrypted_file: "Please select a file to decrypt!",
+        alert_select_algorithm: "Algorithm not selected! Please select the correct algorithm for decryption.",
+        decrypted_content: "Decrypted content",
+        decryption_operation: "Decryption"
+      },
+      ru: {
+        system_title: "Система безопасного шифрования файлов",
+        system_name: "SecureCrypto",
+        welcome: "Добро пожаловать,",
+        logout: "Выход",
+        menu: "Меню",
+        main_page: "Главная",
+        encryption: "Шифрование",
+        decryption: "Дешифрование",
+        history: "История",
+        main_title: "Система безопасного шифрования файлов",
+        about_project: "О проекте",
+        about_text: "Эта система надежно шифрует ваши файлы с использованием современных криптографических алгоритмов AES и RSA.",
+        algorithms: "Алгоритмы шифрования",
+        algorithms_text: "Поддерживаются AES (128, 192, 256 бит), RSA (2048 бит) и другие современные методы шифрования.",
+        importance: "Важность шифрования",
+        importance_text: "Шифрование необходимо для защиты ваших данных от третьих лиц.",
+        instructions: "Инструкция",
+        step1: "Выберите файл и алгоритм в разделе шифрования",
+        step2: "Нажмите кнопку \"Зашифровать\"",
+        step3: "Скачайте зашифрованный файл",
+        step4: "Используйте тот же алгоритм для дешифрования",
+        encryption_title: "Шифрование файлов",
+        upload_file: "Перетащите файл или нажмите здесь",
+        select_algorithm: "Выберите алгоритм:",
+        encrypt: "Зашифровать",
+        encrypted_result: "Зашифрованный результат:",
+        download: "Скачать",
+        decryption_title: "Дешифрование файлов",
+        upload_encrypted: "Загрузите зашифрованный файл",
+        unknown_algorithm: "Алгоритм неизвестен",
+        decrypt: "Дешифровать",
+        decrypted_result: "Дешифрованный результат:",
+        history_title: "История операций",
+        date: "Дата",
+        operation: "Операция",
+        algorithm: "Алгоритм",
+        filename: "Имя файла",
+        no_history: "Операций пока нет",
+        alert_select_file: "Пожалуйста, выберите файл для шифрования!",
+        alert_select_algorithm: "Пожалуйста, выберите правильный алгоритм для дешифрования!",
+        alert_select_encrypted_file: "Пожалуйста, выберите файл для дешифрования!",
+        alert_select_encrypted_file: "Пожалуйста, выберите файл для дешифрования!",
+        alert_select_algorithm: "Алгоритм не выбран! Пожалуйста, выберите правильный алгоритм для дешифрования.",
+        decrypted_content: "Дешифрованное содержимое",
+        decryption_operation: "Дешифрование"
+      }
+    };
+
+    let currentLanguage = localStorage.getItem('language') || 'az';
+
+    function changeLanguage(lang) {
+      currentLanguage = lang;
+      localStorage.setItem('language', lang);
+      applyTranslations();
+      updateHistoryTableHeaders();
+      updateSelectOptions();
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[currentLanguage][key]) {
+          element.textContent = translations[currentLanguage][key];
+        }
+      });
+    }
+
+    function updateHistoryTableHeaders() {
+      const headers = document.querySelectorAll('#history-table-body th[data-i18n]');
+      headers.forEach(header => {
+        const key = header.getAttribute('data-i18n');
+        header.textContent = translations[currentLanguage][key];
+      });
+    }
+
+    function updateSelectOptions() {
+      const unknownOption = document.querySelector('#decrypt-algorithm option[value="unknown"]');
+      if (unknownOption) {
+        unknownOption.textContent = translations[currentLanguage]['unknown_algorithm'];
+      }
+    }
+
+    // Check if user is logged in
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('language-switcher').value = currentLanguage;
+      applyTranslations();
+      updateSelectOptions();
+
+      const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+      if (!loggedInUser) {
+        window.location.href = 'login.html';
+      } else {
+        const greetings = {
+          az: [
+            `${loggedInUser.username}!😊`
+          ],
+          en: [
+            `${loggedInUser.username}! 😊`
+          ],
+          ru: [
+            `${loggedInUser.username}! 😊`
+          ]
+        };
+        const randomGreeting = greetings[currentLanguage][Math.floor(Math.random() * greetings[currentLanguage].length)];
+        document.getElementById('username-display').innerHTML = randomGreeting;
+
+        if (loggedInUser.email) {
+          const usernameElement = document.getElementById('username-display');
+          usernameElement.setAttribute('title', `Email: ${loggedInUser.email}`);
+          usernameElement.classList.add('cursor-help', 'border-b-2', 'border-dotted', 'border-blue-200');
+        }
+      }
+    });
+
+    // Logout function
+    function logout() {
+      document.querySelector('.welcome-text').style.animation = 'flipIn 0.5s ease-in reverse';
+      setTimeout(() => {
+        localStorage.removeItem('loggedInUser');
+        window.location.href = 'login.html';
+      }, 500);
+    }
+
+    // Show selected section
+    function showSection(sectionId) {
+      document.querySelectorAll('.section-content').forEach(section => {
+        section.classList.add('hidden');
+      });
+      document.getElementById(sectionId).classList.remove('hidden');
+
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+    }
+
+    // File upload functionality
+    document.getElementById('encrypt-drop-zone').addEventListener('click', () => document.getElementById('encrypt-file-input').click());
+    document.getElementById('decrypt-drop-zone').addEventListener('click', () => document.getElementById('decrypt-file-input').click());
+
+    // File input handlers
+    ['encrypt-file-input', 'decrypt-file-input'].forEach(id => {
+      document.getElementById(id).addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          const dropZone = id === 'encrypt-file-input'
+            ? document.getElementById('encrypt-drop-zone')
+            : document.getElementById('decrypt-drop-zone');
+
+          dropZone.innerHTML = `
+            <i class="fas fa-file-alt text-4xl text-blue-500 mb-3"></i>
+            <p class="text-gray-600 font-medium">${file.name}</p>
+            <p class="text-sm text-gray-500">${(file.size / 1024).toFixed(2)} KB</p>
+          `;
+        }
+      });
+    });
+
+    // Encryption/Decryption logic
+    document.getElementById('encrypt-btn').addEventListener('click', handleEncryption);
+    document.getElementById('decrypt-btn').addEventListener('click', handleDecryption);
+
+    function handleEncryption() {
+      const fileInput = document.getElementById('encrypt-file-input');
+      const algorithm = document.getElementById('encrypt-algorithm').value;
+
+      if (!fileInput.files.length) {
+        alert('Zəhmət olmasa şifrələmək üçün fayl seçin!');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      document.getElementById('encrypted-result').value = `Şifrələnmiş məzmun (${algorithm.toUpperCase()}): ${file.name}`;
+      document.getElementById('download-encrypted-btn').disabled = false;
+      addToHistory(new Date(), 'Şifrələmə', algorithm, file.name);
+    }
+
+    function handleDecryption() {
+      const fileInput = document.getElementById('decrypt-file-input');
+      const algorithm = document.getElementById('decrypt-algorithm').value;
+
+      if (!fileInput.files.length) {
+        alert(translations[currentLanguage]['alert_select_encrypted_file']);
+        return;
+      }
+
+      if (algorithm === 'unknown') {
+        alert(translations[currentLanguage]['alert_select_algorithm']);
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const decryptedText = `${translations[currentLanguage]['decrypted_content']} (${algorithm.toUpperCase()}): ${file.name}`;
+      document.getElementById('decrypted-result').value = decryptedText;
+      document.getElementById('download-decrypted-btn').disabled = false;
+      addToHistory(new Date(), translations[currentLanguage]['decryption_operation'], algorithm, file.name);
+    }
+    // History management
+    function addToHistory(date, operation, algorithm, filename) {
+      const historyTable = document.getElementById('history-table-body');
+
+      if (historyTable.querySelector('td[colspan="4"]')) {
+        historyTable.innerHTML = '';
+      }
+
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date.toLocaleString()}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm ${operation === 'Şifrələmə' ? 'text-green-600' : 'text-blue-600'}">${operation}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${algorithm.toUpperCase()}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${filename}</td>
+      `;
+
+      historyTable.prepend(row);
+    }
+
+   // Fayl inputlarını təmizləmək üçün funksiya
+function clearFileInput(type) {
+  if(type === 'encrypt') {
+    document.getElementById('encrypt-file-input').value = '';
+    document.getElementById('encrypt-drop-zone').innerHTML = `
+      <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-3"></i>
+      <p class="text-gray-600" data-i18n="upload_file">Faylı bura sürükləyin və ya klik edin</p>
+    `;
+    document.getElementById('encrypted-result').value = '';
+    document.getElementById('download-encrypted-btn').disabled = true;
+  } else {
+    document.getElementById('decrypt-file-input').value = '';
+    document.getElementById('decrypt-drop-zone').innerHTML = `
+      <i class="fas fa-file-import text-4xl text-blue-500 mb-3"></i>
+      <p class="text-gray-600" data-i18n="upload_encrypted">Şifrələnmiş faylı bura yükləyin</p>
+    `;
+    document.getElementById('decrypted-result').value = '';
+    document.getElementById('download-decrypted-btn').disabled = true;
+  }
+  
+  // Apply translations to newly added elements
+  applyTranslations();
+}
+    // Drag and drop
+    ['encrypt-file-input', 'decrypt-file-input'].forEach(id => {
+  document.getElementById(id).addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Show the file info and the header with the delete button
+      const dropZone = id === 'encrypt-file-input' 
+        ? document.getElementById('encrypt-drop-zone')
+        : document.getElementById('decrypt-drop-zone');
+      
+      dropZone.innerHTML = `
+        <i class="fas fa-file-alt text-4xl text-blue-500 mb-3"></i>
+        <p class="text-gray-600 font-medium">${file.name}</p>
+        <p class="text-sm text-gray-500">${(file.size / 1024).toFixed(2)} KB</p>
+      `;
+    }
+  });
+});
+    
+  </script>
 </body>
+
 </html>
